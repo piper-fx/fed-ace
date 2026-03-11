@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script>
+        if (sessionStorage.getItem('fedex_admin') !== 'true') {
+            window.location.replace('admin-login.html');
+        }
+    </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FedEx Admin - Package Management</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+        body { background: #f5f5f5; color: #333; }
+        :root { --fedex-purple: #4A148C; --fedex-orange: #FF6200; }
+
+        .admin-container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .admin-header {
+            background: var(--fedex-purple); color: white; padding: 20px; border-radius: 8px;
+            margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 5px solid var(--fedex-orange);
+        }
+        .logout-btn { background: white; color: var(--fedex-purple); border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.2s;}
+        .logout-btn:hover { background: #eee; }
+
+        .tabs { display: flex; margin-bottom: 20px; background: white; border-radius: 8px; padding: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .tab { padding: 12px 24px; cursor: pointer; border-radius: 4px; margin-right: 10px; font-weight: bold; color: var(--fedex-purple); }
+        .tab.active { background: var(--fedex-purple); color: white; }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .form-container { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: var(--fedex-purple); font-size: 14px; }
+        .form-input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 15px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+        .img-preview-box { width: 100%; height: 180px; border: 2px dashed #ddd; border-radius: 8px; margin-top: 10px; display: flex; align-items: center; justify-content: center; background: #f9f9f9; overflow: hidden; }
+        #liveImgPreview { max-width: 100%; max-height: 100%; display: none; }
+
+        .submit-btn { background: var(--fedex-orange); color: white; border: none; padding: 15px; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; transition: 0.2s;}
+        .submit-btn:hover { background: #e05600; }
+
+        .packages-grid { display: grid; gap: 20px; }
+        .package-card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-left: 6px solid var(--fedex-purple); }
+        .package-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .tracking-number { font-size: 18px; font-weight: bold; color: var(--fedex-purple); }
+        .package-status { padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; text-transform: uppercase; background: #eee; }
+
+        .package-details { display: flex; gap: 20px; margin-bottom: 15px; }
+        .package-image { width: 120px; height: 120px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd; }
+        .package-info { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 14px; }
+        .full-info { grid-column: span 2; background: #fcfcfc; padding: 8px; border-radius: 4px; border-left: 3px solid #ddd; }
+        
+        .action-btn { padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: bold; }
+        .status-btn { background: var(--fedex-purple); color: white; margin-right: 5px; }
+        .date-btn { background: #6c757d; color: white; margin-right: 5px; }
+
+        /* Modal Styles */
+        .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:2000; align-items:center; justify-content:center; }
+        .modal-content { background:white; padding:30px; border-radius:8px; width:90%; max-width:400px; }
+        .status-option { padding:12px; border:1px solid #ddd; margin:8px 0; border-radius:5px; cursor:pointer; font-weight: bold; }
+        .status-option.selected { border-color: var(--fedex-orange); background: #fff5f5; border-width: 2px; }
+    </style>
+</head>
+<body>
+
+    <div class="admin-container">
+        <div class="admin-header">
+            <h1><i class="fas fa-shipping-fast"></i> FedEx Management Console</h1>
+            <button class="logout-btn" onclick="logout()">Sign Out</button>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" id="tabBtnCreate">Create Shipment</div>
+            <div class="tab" id="tabBtnManage">Manage Packages</div>
+        </div>
+
+        <div id="createTab" class="tab-content active">
+            <div class="form-container">
+                <form id="packageForm">
+                    <div class="form-group">
+                        <label>Tracking Number (Auto-generates if empty)</label>
+                        <input type="text" id="trackingNumber" class="form-input">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Package Image URL</label>
+                            <input type="url" id="imageUrl" class="form-input" oninput="updatePreview()">
+                        </div>
+                        <div class="form-group">
+                            <label>Live Preview</label>
+                            <div class="img-preview-box">
+                                <span id="previewPlaceholder">No Image URL</span>
+                                <img id="liveImgPreview">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Sender Name</label>
+                            <input type="text" id="senderName" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Recipient Name</label>
+                            <input type="text" id="recipientName" class="form-input" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Package Description</label>
+                        <input type="text" id="packageDesc" class="form-input" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Delivery Address</label>
+                        <input type="text" id="recipientAddress" class="form-input" required>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Service Type</label>
+                            <select id="service" class="form-input">
+                                <option>FedEx Express</option>
+                                <option>FedEx Ground</option>
+                                <option>FedEx Home Delivery</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Est. Delivery Date</label>
+                            <input type="date" id="estDelivery" class="form-input">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="submit-btn">Save Shipment</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="manageTab" class="tab-content">
+            <div class="packages-grid" id="packagesList"></div>
+        </div>
+    </div>
+
+    <div id="statusModal" class="modal">
+        <div class="modal-content">
+            <h3>Update Status</h3>
+            <div id="statusOptions">
+                <div class="status-option" onclick="selectStatus(this, 'Pending')">Pending</div>
+                <div class="status-option" onclick="selectStatus(this, 'Shipped')">Shipped</div>
+                <div class="status-option" onclick="selectStatus(this, 'In-Transit')">In-Transit</div>
+                <div class="status-option" onclick="selectStatus(this, 'Out for Delivery')">Out for Delivery</div>
+                <div class="status-option" onclick="selectStatus(this, 'Delivered')">Delivered</div>
+                <div class="status-option" onclick="selectStatus(this, 'On Hold')">On Hold</div>
+            </div>
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button class="submit-btn" style="flex:1" onclick="confirmStatusUpdate()">Update</button>
+                <button class="action-btn" style="background:#666; color:white; padding:15px; border-radius:4px; flex:1" onclick="closeModal('statusModal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="dateModal" class="modal">
+        <div class="modal-content">
+            <h3>Edit Delivery Date</h3>
+            <div class="form-group" style="margin-top:15px;">
+                <label>New Estimated Date</label>
+                <input type="date" id="newDateInput" class="form-input">
+            </div>
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button class="submit-btn" style="flex:1" onclick="confirmDateUpdate()">Save Date</button>
+                <button class="action-btn" style="background:#666; color:white; padding:15px; border-radius:4px; flex:1" onclick="closeModal('dateModal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentEditingId = null;
+        let selectedStatus = '';
+
+        // Tab Management
+        document.getElementById('tabBtnCreate').onclick = () => {
+            document.getElementById('createTab').classList.add('active');
+            document.getElementById('manageTab').classList.remove('active');
+            document.getElementById('tabBtnCreate').classList.add('active');
+            document.getElementById('tabBtnManage').classList.remove('active');
+        };
+
+        document.getElementById('tabBtnManage').onclick = () => {
+            document.getElementById('createTab').classList.remove('active');
+            document.getElementById('manageTab').classList.add('active');
+            document.getElementById('tabBtnCreate').classList.remove('active');
+            document.getElementById('tabBtnManage').classList.add('active');
+            loadPackages();
+        };
+
+        function updatePreview() {
+            const url = document.getElementById('imageUrl').value;
+            const img = document.getElementById('liveImgPreview');
+            const placeholder = document.getElementById('previewPlaceholder');
+            if(url) { img.src = url; img.style.display = 'block'; placeholder.style.display = 'none'; }
+            else { img.style.display = 'none'; placeholder.style.display = 'block'; }
+        }
+
+        document.getElementById('packageForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const data = {
+                trackingNumber: document.getElementById('trackingNumber').value,
+                sender: document.getElementById('senderName').value,
+                recipient: document.getElementById('recipientName').value,
+                description: document.getElementById('packageDesc').value,
+                address: document.getElementById('recipientAddress').value,
+                service: document.getElementById('service').value,
+                estDelivery: document.getElementById('estDelivery').value,
+                imgUrl: document.getElementById('imageUrl').value,
+                status: 'Pending'
+            };
+
+            const res = await fetch('/api/packages', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+            const result = await res.json();
+            alert("Package Saved! ID: " + result.trackingNumber);
+            e.target.reset();
+            updatePreview();
+        };
+
+        async function loadPackages() {
+            const res = await fetch('/api/track/all');
+            const pkgs = await res.json();
+            const list = document.getElementById('packagesList');
+            list.innerHTML = pkgs.length ? '' : '<p style="text-align:center; padding:20px;">No packages found in database.</p>';
+            
+            pkgs.forEach(p => {
+                list.innerHTML += `
+                    <div class="package-card">
+                        <div class="package-header">
+                            <span class="tracking-number">${p.trackingNumber}</span>
+                            <span class="package-status">${p.status}</span>
+                        </div>
+                        <div class="package-details">
+                            <img src="${p.imgUrl || 'https://via.placeholder.com/120'}" class="package-image">
+                            <div class="package-info">
+                                <div><strong>From:</strong> ${p.sender}</div>
+                                <div><strong>To:</strong> ${p.recipient}</div>
+                                <div><strong>Service:</strong> ${p.service}</div>
+                                <div><strong>Delivery:</strong> ${p.estDelivery || 'N/A'}</div>
+                                <div class="full-info"><strong>Description:</strong> ${p.description || 'None'}</div>
+                                <div class="full-info" style="font-size:12px;"><strong>Address:</strong> ${p.address}</div>
+                            </div>
+                        </div>
+                        <div class="package-actions">
+                            <button class="action-btn status-btn" onclick="openStatusModal('${p.trackingNumber}')">Update Status</button>
+                            <button class="action-btn date-btn" onclick="openDateModal('${p.trackingNumber}', '${p.estDelivery}')">Edit Date</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // Status Modal Functions
+        function openStatusModal(id) { 
+            currentEditingId = id; 
+            document.getElementById('statusModal').style.display = 'flex'; 
+        }
+
+        // Date Modal Functions
+        function openDateModal(id, currentDate) {
+            currentEditingId = id;
+            document.getElementById('newDateInput').value = currentDate;
+            document.getElementById('dateModal').style.display = 'flex';
+        }
+
+        function closeModal(modalId) { 
+            document.getElementById(modalId).style.display = 'none'; 
+        }
+
+        function selectStatus(el, s) { 
+            selectedStatus = s; 
+            document.querySelectorAll('.status-option').forEach(o => o.classList.remove('selected'));
+            el.classList.add('selected');
+        }
+
+        async function confirmStatusUpdate() {
+            if(!selectedStatus) return alert("Select a status");
+            const pkgRes = await fetch(`/api/track/${currentEditingId}`);
+            const pkg = await pkgRes.json();
+            pkg.status = selectedStatus;
+
+            await fetch('/api/packages', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(pkg)
+            });
+            closeModal('statusModal');
+            loadPackages();
+        }
+
+        async function confirmDateUpdate() {
+            const newDate = document.getElementById('newDateInput').value;
+            if(!newDate) return alert("Please select a date");
+
+            const pkgRes = await fetch(`/api/track/${currentEditingId}`);
+            const pkg = await pkgRes.json();
+            pkg.estDelivery = newDate; // Update the date field
+
+            await fetch('/api/packages', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(pkg)
+            });
+            closeModal('dateModal');
+            loadPackages();
+            alert("Delivery date updated!");
+        }
+
+        function logout() { sessionStorage.clear(); window.location.href = 'admin-login.html'; }
+    </script>
+</body>
+</html>

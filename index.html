@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FedEx Mobile Homepage</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --fedex-purple: #4A148C;
+            --fedex-orange: #FF6200;
+            --fedex-white: #FFFFFF;
+            --fedex-light-gray: #FAFAFA;
+            --fedex-dark-text: #333333;
+            --font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        }
+
+        /* Global Box Sizing */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body, html { font-family: var(--font-family); background-color: var(--fedex-light-gray); overflow-x: hidden; width: 100%; }
+
+        /* --- HOME PAGE STYLES --- */
+        .header { width: 100%; display: block; background-color: var(--fedex-purple); }
+        .header-image { width: 100%; height: auto; display: block; object-fit: cover; }
+        
+        .hero {
+            background-image: url('https://i.ibb.co/zTHpSW6Y/IMG-5126.jpg');
+            background-size: cover; background-position: center; height: 290px;
+            display: flex; justify-content: center; align-items: center; text-align: center; position: relative;
+        }
+        .hero::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 30, 60, 0.4); }
+        .hero-text { color: var(--fedex-white); font-size: 46px; font-weight: 200; line-height: 1.1; z-index: 1; letter-spacing: 0.5px; margin-top: -20px; }
+
+        .quick-actions-wrapper { position: relative; z-index: 10; margin-top: -60px; padding: 0 15px; }
+        .quick-actions { display: flex; align-items: flex-end; width: 100%; max-width: 600px; margin: 0 auto; }
+        .action-btn { flex: 1; background-color: var(--fedex-white); color: var(--fedex-dark-text); border: none; height: 130px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; font-size: 13px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; border-bottom: 2px solid #ddd;}
+        .action-btn.active { background-color: var(--fedex-purple); color: var(--fedex-white); height: 160px; border-bottom: none;}
+        .action-btn .btn-icon { width: 44px; height: 44px; margin-bottom: 12px; fill: none; stroke: currentColor; stroke-width: 1.5; }
+
+        .tracking-container { padding: 40px 15px 30px 15px; background-color: var(--fedex-white); display: flex; justify-content: center; }
+        .tracking-bar { display: flex; width: 100%; max-width: 600px; border: 1px solid #777; }
+        .tracking-input { flex: 1; padding: 18px 20px; font-size: 20px; border: none; outline: none; color: #333; min-width: 0; }
+        .tracking-input::placeholder { font-style: italic; color: #555; font-weight: 300; }
+        .track-btn { background-color: var(--fedex-orange); color: var(--fedex-white); border: none; padding: 0 25px; font-size: 20px; font-weight: 800; letter-spacing: 1px; cursor: pointer; display: flex; align-items: center; justify-content: center; text-transform: uppercase; white-space: nowrap; }
+        .track-btn svg { margin-left: 8px; width: 18px; height: 18px; fill: currentColor; }
+
+        .bottom-image-container { width: 100%; display: block; margin-bottom: 0; }
+        .bottom-image { width: 100%; height: auto; display: block; }
+
+        /* --- TRACKING PAGE STYLES --- */
+        #trackingPage { display: none; background-color: #f4f4f4; min-height: 100vh; padding-bottom: 40px; }
+        .res-header { background-color: var(--fedex-purple); color: white; padding: 18px 20px; font-weight: bold; font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 10px; letter-spacing: 1px; }
+        .tracking-content { padding: 20px; max-width: 600px; margin: 0 auto; }
+        
+        .tracking-num-label { font-size: 12px; color: #666; font-weight: 700; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px;}
+        .tracking-num-value { font-size: 28px; color: var(--fedex-purple); font-weight: 300; margin-bottom: 25px; }
+
+        .status-banner { background: white; border-top: 5px solid var(--fedex-orange); padding: 20px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .status-title { font-size: 22px; font-weight: bold; color: var(--fedex-dark-text); margin-bottom: 8px; }
+        .status-msg { font-size: 14px; color: #555; line-height: 1.4; }
+
+        .detail-card, .history-card, .footer-product-box { background: white; padding: 20px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .detail-title, .history-header { font-size: 18px; font-weight: bold; color: var(--fedex-purple); border-bottom: 1px solid #eee; padding-bottom: 12px; margin-bottom: 15px; }
+        
+        .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; font-size: 14px; }
+        .detail-item p { color: #888; margin-bottom: 4px; font-size: 12px; text-transform: uppercase; font-weight: bold;}
+        .detail-item b { color: #333; font-weight: 500; font-size: 15px;}
+        
+        .pkg-img { width: 100%; max-height: 250px; object-fit: cover; border-radius: 4px; margin-bottom: 20px; border: 1px solid #eee; }
+
+        .history-row { display: flex; margin-bottom: 20px; position: relative; }
+        .h-time { width: 90px; font-size: 12px; color: #777; padding-right: 15px; border-right: 2px solid #eee; text-align: right; font-weight: 500;}
+        .h-info { flex: 1; font-size: 14px; padding-left: 15px; position: relative;}
+        .h-info::before { content: ''; position: absolute; left: -6px; top: 0; width: 10px; height: 10px; border-radius: 50%; background: var(--fedex-orange); }
+        .h-info b { display: block; color: var(--fedex-dark-text); font-size: 15px; margin-bottom: 3px;}
+        .h-info span { display: block; color: #555; font-size: 13px; }
+        .h-info i { display: block; color: #888; margin-top: 4px; font-style: normal; font-size: 13px;}
+    </style>
+</head>
+<body>
+
+    <div id="homeContent">
+        <header class="header">
+            <img src="https://i.ibb.co/RGwfWwBt/IMG-5142.jpg" alt="Header Image" class="header-image">
+        </header>
+
+        <main>
+            <section class="hero">
+                <div class="hero-text">Ship, manage,<br>track, deliver</div>
+            </section>
+
+            <section class="quick-actions-wrapper">
+                <div class="quick-actions">
+                    <button class="action-btn">
+                        <svg class="btn-icon" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+                            <g fill="none" stroke="currentColor" stroke-width="2" stroke-miterlimit="10">
+                                <path d="M56 22.9L32 10 8 22.9v23.2L32 59l24-12.9z"/>
+                                <path d="M8 22.9l24 12.9 24-12.9M32 35.8V59"/>
+                            </g>
+                            <g fill="none" stroke="currentColor" stroke-width="2" stroke-miterlimit="10">
+                                <rect x="4" y="36" width="20" height="24" rx="2"/>
+                                <rect x="8" y="40" width="12" height="6"/>
+                                <line x1="8" y1="50" x2="10" y2="50"/><line x1="13" y1="50" x2="15" y2="50"/><line x1="18" y1="50" x2="20" y2="50"/>
+                                <line x1="8" y1="54" x2="10" y2="54"/><line x1="13" y1="54" x2="15" y2="54"/><line x1="18" y1="54" x2="20" y2="54"/>
+                            </g>
+                        </svg>
+                        RATE & SHIP
+                    </button>
+                    
+                    <button class="action-btn active">
+                        <svg class="btn-icon" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+                             <g fill="none" stroke="currentColor" stroke-width="2" stroke-miterlimit="10">
+                                <path d="M50.7 23.6L32 10 13.3 23.6v21.8L32 59l18.7-13.6z"/>
+                                <path d="M13.3 23.6l18.7 13.6 18.7-13.6M32 37.2V59"/>
+                            </g>
+                            <g fill="none" stroke="currentColor" stroke-width="3" stroke-miterlimit="10">
+                                <circle cx="42" cy="42" r="14"/>
+                                <line x1="52" y1="52" x2="60" y2="60"/>
+                            </g>
+                        </svg>
+                        TRACK
+                    </button>
+                    
+                    <button class="action-btn">
+                        <svg class="btn-icon" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+                            <path fill="none" stroke="currentColor" stroke-width="3" stroke-miterlimit="10" d="M32,6C17.6,6,6,17.6,6,32c0,10.7,20.6,27.8,26,32 c5.4-4.2,26-21.3,26-32C58,17.6,46.4,6,32,6z"/>
+                            <circle fill="none" stroke="currentColor" stroke-width="3" stroke-miterlimit="10" cx="32" cy="32" r="10"/>
+                        </svg>
+                        LOCATIONS
+                    </button>
+                </div>
+            </section>
+
+            <section class="tracking-container">
+                <div class="tracking-bar">
+                    <input type="text" id="trackInput" class="tracking-input" placeholder="TRACKING ID">
+                    <button class="track-btn" onclick="doTracking()">
+                        TRACK
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </section>
+
+            <section class="bottom-image-container"><img src="https://i.ibb.co/NgFyHF8x/IMG-5130.jpg" class="bottom-image"></section>
+            <section class="bottom-image-container"><img src="https://i.ibb.co/xtL1G7C5/IMG-5127.jpg" class="bottom-image"></section>
+            <section class="bottom-image-container"><img src="https://i.ibb.co/ZppY8wZd/IMG-5128.jpg" class="bottom-image"></section>
+            <section class="bottom-image-container"><img src="https://i.ibb.co/d4r4b34q/IMG-5129.jpg" class="bottom-image"></section>
+            <section class="bottom-image-container"><img src="https://i.ibb.co/d4tB3tM6/IMG-5131.jpg" class="bottom-image"></section>
+            <section class="bottom-image-container"><img src="https://i.ibb.co/392Gt7R0/IMG-5132.jpg" class="bottom-image"></section>
+            <section class="bottom-image-container"><img src="https://i.ibb.co/YByhcQQL/IMG-5133.jpg" class="bottom-image"></section>
+            <section class="bottom-image-container"><img src="https://i.ibb.co/cX7JjBPh/IMG-5134.jpg" class="bottom-image"></section>
+            <section class="bottom-image-container"><img src="https://i.ibb.co/SZWjQN8/IMG-5135.jpg" class="bottom-image"></section>
+            <section class="bottom-image-container"><img src="https://i.ibb.co/sJkjkzDc/IMG-5136.jpg" class="bottom-image"></section>
+            <section class="bottom-image-container"><img src="https://i.ibb.co/237zZSsN/IMG-5137.jpg" class="bottom-image"></section>
+            <section class="bottom-image-container"><img src="https://i.ibb.co/FbBc070R/IMG-5138.jpg" class="bottom-image"></section>
+            <section class="bottom-image-container"><img src="https://i.ibb.co/2YYVDc3v/IMG-5139.jpg" class="bottom-image"></section>
+            <section class="bottom-image-container"><img src="https://i.ibb.co/TD2hkCX7/IMG-5140.jpg" class="bottom-image"></section>
+            <section class="bottom-image-container"><img src="https://i.ibb.co/BVZQqJs6/IMG-5141.jpg" class="bottom-image"></section>
+        </main>
+    </div>
+
+    <div id="trackingPage">
+        <div class="res-header" onclick="closeTracking()">
+            <i class="fas fa-chevron-left"></i> BACK TO HOME
+        </div>
+
+        <div class="tracking-content">
+            <p class="tracking-num-label">TRACKING NUMBER</p>
+            <div id="resNum" class="tracking-num-value"></div>
+
+            <div class="status-banner">
+                <p style="font-size: 11px; color: var(--fedex-orange); text-transform: uppercase; margin-bottom: 5px; font-weight: bold;">Latest Update</p>
+                <div id="resStatus" class="status-title"></div>
+                <p id="resDesc" class="status-msg"></p>
+            </div>
+
+            <div class="detail-card">
+                <h4 class="detail-title">Shipment Details</h4>
+                <div class="detail-grid">
+                    <div class="detail-item"><p>Sender:</p><b id="resSender"></b></div>
+                    <div class="detail-item"><p>Recipient:</p><b id="resRecipient"></b></div>
+                    <div class="detail-item" style="grid-column: span 2;"><p>Address:</p><b id="resAddress"></b></div>
+                    <div class="detail-item" style="grid-column: span 2;"><p>Description:</p><b id="resPkgDesc"></b></div>
+                    <div class="detail-item"><p>Est. Delivery:</p><b id="resEstDate" style="color:var(--fedex-orange)"></b></div>
+                    <div class="detail-item"><p>Service:</p><b id="resService"></b></div>
+                </div>
+            </div>
+
+            <div id="resImgArea"></div>
+
+            <div class="history-card">
+                <div class="history-header">Tracking History</div>
+                <div id="resHistoryList"></div>
+            </div>
+
+            <div class="footer-product-box">
+                <h4 style="color:var(--fedex-purple); border-bottom:1px solid #eee; padding-bottom:8px; margin-bottom:10px; font-size: 16px;">Product Information</h4>
+                <div style="display:flex; justify-content:space-between; font-size: 13px;">
+                    <div><p style="color:#888; margin-bottom:4px; font-size: 12px; text-transform: uppercase;">Service Type:</p><b id="resFooterService"></b></div>
+                    <div style="text-align: right;"><p style="color:#888; margin-bottom:4px; font-size: 12px; text-transform: uppercase;">Features:</p><b>Direct Signature Required</b></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function doTracking() {
+            const num = document.getElementById('trackInput').value.trim();
+            if(!num) return alert("Please enter tracking number.");
+
+            try {
+                const res = await fetch(`/api/track/${num}`);
+                if(!res.ok) return alert("Tracking number not found.");
+                const data = await res.json();
+                
+                document.getElementById('homeContent').style.display = 'none';
+                document.getElementById('trackingPage').style.display = 'block';
+
+                document.getElementById('resNum').innerText = data.trackingNumber;
+                document.getElementById('resStatus').innerText = data.status;
+                
+                // BANNER: Always shows the VERY LATEST item in the history array
+                const latest = data.history[data.history.length - 1];
+                document.getElementById('resDesc').innerText = `${latest.details} at ${latest.location}`;
+
+                document.getElementById('resSender').innerText = data.sender || "Protected";
+                document.getElementById('resRecipient').innerText = data.recipient || "Protected";
+                document.getElementById('resAddress').innerText = data.address || "On File";
+                document.getElementById('resPkgDesc').innerText = data.description || "Package / Parcel";
+                document.getElementById('resEstDate').innerText = data.estDelivery || "Pending Update";
+                document.getElementById('resService').innerText = data.service || "FedEx Express";
+                document.getElementById('resFooterService').innerText = data.service || "FedEx Express";
+
+                const imgArea = document.getElementById('resImgArea');
+                imgArea.innerHTML = data.imgUrl ? `<img src="${data.imgUrl}" class="pkg-img">` : '';
+
+                // HISTORY: Renders index 0 (First Status) at the TOP, others below
+                const histList = document.getElementById('resHistoryList');
+                histList.innerHTML = '';
+                // Reverse the array so the newest update is at the top of the timeline
+                const reversedHistory = [...data.history].reverse();
+                
+                reversedHistory.forEach(item => {
+                    histList.innerHTML += `
+                        <div class="history-row">
+                            <div class="h-time">${item.time}</div>
+                            <div class="h-info">
+                                <b>${item.status}</b>
+                                <span>${item.location}</span>
+                                <i>${item.details}</i>
+                            </div>
+                        </div>
+                    `;
+                });
+                window.scrollTo(0, 0);
+            } catch (err) { alert("Error connecting to server."); }
+        }
+
+        function closeTracking() {
+            document.getElementById('homeContent').style.display = 'block';
+            document.getElementById('trackingPage').style.display = 'none';
+        }
+    </script>
+
+    <script type="text/javascript"> 
+    (function(w,d,v3){ w.chaportConfig = { appId : '6888c4acf70e201da98c5aa5', };  if(w.chaport)return;v3=w.chaport={};v3._q=[];v3._l={};v3.q=function(){v3._q.push(arguments)};v3.on=function(e,fn){if(!v3._l[e])v3._l[e]=[];v3._l[e].push(fn)};var s=d.createElement('script');s.type='text/javascript';s.async=true;s.src='https://app.chaport.com/javascripts/insert.js';var ss=d.getElementsByTagName('script')[0];ss.parentNode.insertBefore(s,ss)})(window, document); 
+    </script> 
+    </body>
+</html>
